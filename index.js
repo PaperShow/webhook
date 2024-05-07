@@ -17,24 +17,30 @@ app.get('/', (req, res)=>{
     console.log("Hello Dada!!")
 })
 
-app.post('/pay/callback/:uid',async (req, res)=>{
+app.post('/pay/callback/:id',async (req, res)=>{
     const data = req.body;
-    const uid = req.params.uid;
+    const uid = req.params.id;
     
     // decoding the base 64 response
     let base64 = data["response"]
     let bufferObj = Buffer.from(base64, "base64")
     let decodedResponse = bufferObj.toString("utf8")
-    console.log('Decoded:', decodedResponse);
-    decodedResponse.uid = uid; 
+
+    var final = JSON.parse(decodedResponse);
+
+    // adding the uid in the Json for uploading to the Firebase
+    final.uid = uid;
+
+    // var success = final["success"]
+    // console.log('status:', success);
 
     // adding data to firebase
-    await admin.firestore().collection('payment').add(data).catch((error)=>{
+    await admin.firestore().collection('payment').add(final).catch((error)=>{
         res.statusCode(404).json(error)
         console.log(error);
     })
-    console.log('Received payment event:', data);
-    res.status(200).json(data);
+    // console.log('Received payment event:', final);
+    res.status(200).send(final)
 })
 
 app.listen(port, ()=>{
